@@ -53,7 +53,7 @@ def load_data():
         'funds': [],
         'crypto': [],
         'gold_qty': 0,
-        'cash_jpy': 0,
+        'cash_items': [],  # 項目ごとの現金リスト
         'last_updated': None
     }
 
@@ -662,19 +662,19 @@ def update_gold():
 
 @app.route('/cash')
 def cash():
-    """現金管理ページ"""
+    """現金管理ページ（項目ごと）"""
     data = load_data()
-    
+    total_cash = sum(item['amount'] for item in data.get('cash_items', []))
     template = """
     <!DOCTYPE html>
-    <html lang="ja">
+    <html lang=\"ja">
     <head>
         <meta charset="UTF-8">
         <title>現金管理</title>
         <style>
             body { font-family: Arial, sans-serif; margin: 20px; }
             .form-group { margin: 10px 0; }
-            input[type="number"] { padding: 5px; margin: 5px; }
+            input[type="text"], input[type="number"] { padding: 5px; margin: 5px; }
             button { padding: 8px 15px; background: #0066cc; color: white; border: none; border-radius: 3px; cursor: pointer; }
             button:hover { background: #0052a3; }
             .back-link { margin: 20px 0; }
@@ -684,33 +684,22 @@ def cash():
     </head>
     <body>
         <div class="back-link"><a href="{{ url_for('dashboard') }}">← ダッシュボードに戻る</a></div>
-        
         <h1>現金管理</h1>
-        
         <div class="current-amount">
-            現在の現金: {{ "{:,}".format(data.cash_jpy|int) }} 円
+            合計現金: {{ "{:,}".format(total_cash|int) }} 円
         </div>
-        
-        <form method="POST" action="{{ url_for('update_cash') }}">
+        <form method="POST" action="{{ url_for('add_cash_item') }}">
             <div class="form-group">
-                <input type="number" name="amount" step="1" placeholder="金額(円)" value="{{ data.cash_jpy|int }}" required>
-                <button type="submit">更新</button>
+                <input type="text" name="label" placeholder="項目" required>
+                <input type="number" name="amount" step="1" placeholder="金額(円)" required>
+                <button type="submit">追加</button>
             </div>
         </form>
-    </body>
-    </html>
-    """
-    
-    return render_template_string(template, data=data)
-
-@app.route('/update_cash', methods=['POST'])
-def update_cash():
-    """現金額を更新"""
-    data = load_data()
-    data['cash_jpy'] = float(request.form['amount'])
-    save_data(data)
-    return redirect(url_for('cash'))
-
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=False)
+        <table>
+            <tr><th>項目</th><th>金額</th><th>操作</th></tr>
+            {% for item in data.cash_items %}
+            <tr>
+                <td>{{ item.label }}</td>
+                <td>{{ "{:,}".format(item.amount|int) }} 円</td>
+                <td>
+                    <form method="POST" action="{{ url_for('delete_cash_item') }}
