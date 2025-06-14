@@ -1,4 +1,5 @@
-from flask import Flask, render_template_string, request, redirect, url_for
+from flask import Flask, render_template_string, request, redirect, url_for, session
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 import yfinance as yf
 import requests
 import re
@@ -8,15 +9,41 @@ import os
 from datetime import datetime
 
 app = Flask(__name__)
+app.secret_key = 'your_secret_key'  # セッション用の秘密鍵
 
-# データファイルのパス
-DATA_FILE = 'asset_data.json'
+# Flask-Loginのセットアップ
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+
+# サンプルユーザー（A, B, C）
+USERS = {
+    'A': {'password': 'a123'},
+    'B': {'password': 'b123'},
+    'C': {'password': 'c123'},
+}
+
+class User(UserMixin):
+    def __init__(self, username):
+        self.id = username
+
+@login_manager.user_loader
+def load_user(user_id):
+    if user_id in USERS:
+        return User(user_id)
+    return None
+
+def get_data_file():
+    if current_user.is_authenticated:
+        return f'asset_data_{current_user.id}.json'
+    return 'asset_data_guest.json'
 
 def load_data():
-    """データファイルから資産情報を読み込み"""
-    if os.path.exists(DATA_FILE):
+    """ユーザーごとのデータファイルから資産情報を読み込み"""
+    data_file = get_data_file()
+    if os.path.exists(data_file):
         try:
-            with open(DATA_FILE, 'r', encoding='utf-8') as f:
+            with open(data_file, 'r', encoding='utf-8') as f:
                 return json.load(f)
         except:
             pass
@@ -31,9 +58,10 @@ def load_data():
     }
 
 def save_data(data):
-    """データをファイルに保存"""
+    """ユーザーごとのデータファイルに保存"""
     data['last_updated'] = datetime.now().isoformat()
-    with open(DATA_FILE, 'w', encoding='utf-8') as f:
+    data_file = get_data_file()
+    with open(data_file, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
 def get_jp_stock_info(code):
@@ -119,7 +147,32 @@ def get_gold_price():
     except:
         return 0
 
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        if username in USERS and USERS[username]['password'] == password:
+            user = User(username)
+            login_user(user)
+            return redirect(url_for('dashboard'))
+        return 'ログイン失敗'
+    return '''
+    <form method="post">
+        <input name="username" placeholder="ユーザー名(A/B/C)">
+        <input name="password" type="password" placeholder="パスワード(a123/b123/c123)">
+        <button type="submit">ログイン</button>
+    </form>
+    '''
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('login'))
+
 @app.route('/')
+@login_required
 def dashboard():
     """メインダッシュボード"""
     data = load_data()
