@@ -16,11 +16,11 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
-# サンプルユーザー（A, B, C）
+# サンプルユーザー（Tomo, Ryoya, user）
 USERS = {
-    'A': {'password': 'a123'},
-    'B': {'password': 'b123'},
-    'C': {'password': 'c123'},
+    'Tomo': {'password': 'kinopio'},
+    'Ryoya': {'password': '86love'},
+    'user': {'password': 'user'},
 }
 
 class User(UserMixin):
@@ -159,8 +159,8 @@ def login():
         return 'ログイン失敗'
     return '''
     <form method="post">
-        <input name="username" placeholder="ユーザー名(A/B/C)">
-        <input name="password" type="password" placeholder="パスワード(a123/b123/c123)">
+        <input name="username" placeholder="ユーザー名">
+        <input name="password" type="password" placeholder="パスワード">
         <button type="submit">ログイン</button>
     </form>
     '''
