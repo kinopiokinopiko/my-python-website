@@ -255,11 +255,11 @@ def dashboard():
             </tr>
             <tr>
                 <td><a href="{{ url_for('cash') }}" class="asset-link">現金</a></td>
-                <td>{{ "{:,}".format(data.cash_jpy|int) }} 円</td>
+                <td>{{ "{:,}".format((sum(item['amount'] for item in data.get('cash_items', [])))|int) }} 円</td>
             </tr>
             <tr class="total">
                 <td>合計</td>
-                <td>{{ "{:,}".format((jp_total + fund_total + gold_total + data.cash_jpy + us_total_jpy)|int) }} 円</td>
+                <td>{{ "{:,}".format((jp_total + fund_total + gold_total + us_total_jpy + sum(item['amount'] for item in data.get('cash_items', [])))|int) }} 円</td>
             </tr>
         </table>
         
