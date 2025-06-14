@@ -902,5 +902,27 @@ def api_cash():
         save_data(data)
         return jsonify({'result': 'ok'})
 
+# --- SPA用API認証エンドポイント追加 ---
+from flask_login import login_user, logout_user
+
+@app.route('/api/login', methods=['POST'])
+def api_login():
+    data = request.json
+    if not data or 'username' not in data or 'password' not in data:
+        return jsonify({'error': 'Invalid input'}), 400
+    username = data['username']
+    password = data['password']
+    if username in USERS and USERS[username]['password'] == password:
+        user = User(username)
+        login_user(user)
+        return jsonify({'result': 'ok'})
+    return jsonify({'error': 'Login failed'}), 401
+
+@app.route('/api/logout', methods=['POST'])
+@login_required
+def api_logout():
+    logout_user()
+    return jsonify({'result': 'ok'})
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

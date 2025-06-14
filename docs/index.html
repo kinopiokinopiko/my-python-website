@@ -598,6 +598,193 @@
     </div>
 
     <script>
+        // --- SPAログイン状態管理・APIエラー通知・fetchラッパー追加 ---
+        let isLoggedIn = false;
+        let currentUser = '';
+
+        // fetchラッパー（エラー時alert）
+        async function apiFetch(url, options) {
+            try {
+                const res = await fetch(url, options);
+                if (!res.ok) {
+                    let msg = 'APIエラー';
+                    try { const err = await res.json(); msg = err.error || msg; } catch {}
+                    alert(msg);
+                    throw new Error(msg);
+                }
+                return await res.json();
+            } catch (e) {
+                alert('通信エラー: ' + e.message);
+                throw e;
+            }
+        }
+
+        // ログインフォーム描画
+        function showLoginForm() {
+            document.body.innerHTML = `
+            <div class="container" style="max-width:400px;margin:60px auto;">
+              <div class="header"><h1>ログイン</h1></div>
+              <form id="login-form" style="padding:40px;">
+                <div class="form-group" style="flex-direction:column;align-items:stretch;gap:20px;">
+                  <input type="text" id="login-username" placeholder="ユーザー名" required style="font-size:18px;">
+                  <input type="password" id="login-password" placeholder="パスワード" required style="font-size:18px;">
+                  <button class="btn" type="submit">ログイン</button>
+                </div>
+              </form>
+            </div>
+            `;
+            document.getElementById('login-form').onsubmit = async function(e) {
+                e.preventDefault();
+                const username = document.getElementById('login-username').value.trim();
+                const password = document.getElementById('login-password').value;
+                try {
+                    await apiFetch('/api/login', {
+                        method: 'POST', headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({username, password})
+                    });
+                    isLoggedIn = true;
+                    currentUser = username;
+                    location.reload();
+                } catch (e) {}
+            };
+        }
+
+        // ログイン状態確認
+        async function checkLogin() {
+            try {
+                await apiFetch('/api/dashboard');
+                isLoggedIn = true;
+            } catch {
+                isLoggedIn = false;
+            }
+            if (!isLoggedIn) showLoginForm();
+        }
+
+        // logout修正
+        async function logout() {
+            if (confirm('ログアウトしますか？')) {
+                try {
+                    await apiFetch('/api/logout', {method:'POST'});
+                } catch(e) {}
+                alert('ログアウトしました');
+                location.reload();
+            }
+        }
+
+        // --- 既存fetchをapiFetchに置換 ---
+        async function fetchAllData() {
+            const dash = await apiFetch('/api/dashboard');
+            assetData.usdRate = dash.usd_jpy;
+            assetData.jpStocks = await apiFetch('/api/jp_stocks');
+            assetData.usStocks = await apiFetch('/api/us_stocks');
+            assetData.funds = await apiFetch('/api/funds');
+            assetData.cash = await apiFetch('/api/cash');
+            const gold = await apiFetch('/api/gold');
+            assetData.gold = gold;
+            updateDashboard();
+            updateAllTables();
+        }
+        async function addJpStock() {
+            const code = document.getElementById('jp-code').value.trim();
+            const qty = parseInt(document.getElementById('jp-qty').value);
+            if (!code || !qty) { alert('証券コードと数量を入力してください'); return; }
+            const samplePrice = Math.floor(Math.random() * 5000) + 1000;
+            const companyName = `Company ${code}`;
+            await apiFetch('/api/jp_stocks', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({name: companyName, code, qty, price: samplePrice})
+            });
+            await fetchAllData();
+            document.getElementById('jp-code').value = '';
+            document.getElementById('jp-qty').value = '';
+            updateLastModified();
+        }
+        async function deleteJpStock(code) {
+            await apiFetch('/api/jp_stocks', {
+                method: 'DELETE', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({code})
+            });
+            await fetchAllData();
+            updateLastModified();
+        }
+        async function addUsStock() {
+            const symbol = document.getElementById('us-symbol').value.trim().toUpperCase();
+            const qty = parseFloat(document.getElementById('us-qty').value);
+            if (!symbol || !qty) { alert('ティッカーシンボルと数量を入力してください'); return; }
+            const samplePrice = Math.floor(Math.random() * 300) + 50;
+            const companyName = `${symbol} Corp.`;
+            await apiFetch('/api/us_stocks', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({name: companyName, symbol, qty, price: samplePrice})
+            });
+            await fetchAllData();
+            document.getElementById('us-symbol').value = '';
+            document.getElementById('us-qty').value = '';
+            updateLastModified();
+        }
+        async function deleteUsStock(symbol) {
+            await apiFetch('/api/us_stocks', {
+                method: 'DELETE', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({symbol})
+            });
+            await fetchAllData();
+            updateLastModified();
+        }
+        async function addFund() {
+            const name = document.getElementById('fund-name').value.trim();
+            const qty = parseFloat(document.getElementById('fund-qty').value);
+            const price = parseFloat(document.getElementById('fund-price').value);
+            if (!name || !qty || !price) { alert('すべての項目を入力してください'); return; }
+            await apiFetch('/api/funds', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({name, qty, price})
+            });
+            await fetchAllData();
+            document.getElementById('fund-name').value = '';
+            document.getElementById('fund-qty').value = '';
+            document.getElementById('fund-price').value = '';
+            updateLastModified();
+        }
+        async function deleteFund(name) {
+            await apiFetch('/api/funds', {
+                method: 'DELETE', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({name})
+            });
+            await fetchAllData();
+            updateLastModified();
+        }
+        async function addCashItem() {
+            const label = document.getElementById('cash-label').value.trim();
+            const amount = parseInt(document.getElementById('cash-amount').value);
+            if (!label || !amount) { alert('項目と金額を入力してください'); return; }
+            await apiFetch('/api/cash', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({label, amount})
+            });
+            await fetchAllData();
+            document.getElementById('cash-label').value = '';
+            document.getElementById('cash-amount').value = '';
+            updateLastModified();
+        }
+        async function deleteCashItem(label) {
+            await apiFetch('/api/cash', {
+                method: 'DELETE', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({label})
+            });
+            await fetchAllData();
+            updateLastModified();
+        }
+        async function updateGold() {
+            const qty = parseFloat(document.getElementById('gold-qty').value);
+            if (!qty || qty <= 0) { alert('正しい数量を入力してください'); return; }
+            await apiFetch('/api/gold', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({qty})
+            });
+            await fetchAllData();
+            updateLastModified();
+            alert(`金の数量を ${qty}g に更新しました`);
+        }
         // データ管理
         let assetData = {
             jpStocks: [],
@@ -610,13 +797,13 @@
 
         // API連携：全データ取得
         async function fetchAllData() {
-            const dash = await fetch('/api/dashboard').then(r=>r.json());
+            const dash = await apiFetch('/api/dashboard');
             assetData.usdRate = dash.usd_jpy;
-            assetData.jpStocks = await fetch('/api/jp_stocks').then(r=>r.json());
-            assetData.usStocks = await fetch('/api/us_stocks').then(r=>r.json());
-            assetData.funds = await fetch('/api/funds').then(r=>r.json());
-            assetData.cash = await fetch('/api/cash').then(r=>r.json());
-            const gold = await fetch('/api/gold').then(r=>r.json());
+            assetData.jpStocks = await apiFetch('/api/jp_stocks');
+            assetData.usStocks = await apiFetch('/api/us_stocks');
+            assetData.funds = await apiFetch('/api/funds');
+            assetData.cash = await apiFetch('/api/cash');
+            const gold = await apiFetch('/api/gold');
             assetData.gold = gold;
             updateDashboard();
             updateAllTables();
@@ -643,7 +830,7 @@
             if (!code || !qty) { alert('証券コードと数量を入力してください'); return; }
             const samplePrice = Math.floor(Math.random() * 5000) + 1000;
             const companyName = `Company ${code}`;
-            await fetch('/api/jp_stocks', {
+            await apiFetch('/api/jp_stocks', {
                 method: 'POST', headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({name: companyName, code, qty, price: samplePrice})
             });
@@ -653,7 +840,7 @@
             updateLastModified();
         }
         async function deleteJpStock(code) {
-            await fetch('/api/jp_stocks', {
+            await apiFetch('/api/jp_stocks', {
                 method: 'DELETE', headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({code})
             });
@@ -687,7 +874,7 @@
             if (!symbol || !qty) { alert('ティッカーシンボルと数量を入力してください'); return; }
             const samplePrice = Math.floor(Math.random() * 300) + 50;
             const companyName = `${symbol} Corp.`;
-            await fetch('/api/us_stocks', {
+            await apiFetch('/api/us_stocks', {
                 method: 'POST', headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({name: companyName, symbol, qty, price: samplePrice})
             });
@@ -697,7 +884,7 @@
             updateLastModified();
         }
         async function deleteUsStock(symbol) {
-            await fetch('/api/us_stocks', {
+            await apiFetch('/api/us_stocks', {
                 method: 'DELETE', headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({symbol})
             });
@@ -725,7 +912,7 @@
             const qty = parseFloat(document.getElementById('fund-qty').value);
             const price = parseFloat(document.getElementById('fund-price').value);
             if (!name || !qty || !price) { alert('すべての項目を入力してください'); return; }
-            await fetch('/api/funds', {
+            await apiFetch('/api/funds', {
                 method: 'POST', headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({name, qty, price})
             });
@@ -736,7 +923,7 @@
             updateLastModified();
         }
         async function deleteFund(name) {
-            await fetch('/api/funds', {
+            await apiFetch('/api/funds', {
                 method: 'DELETE', headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({name})
             });
@@ -761,7 +948,7 @@
             const label = document.getElementById('cash-label').value.trim();
             const amount = parseInt(document.getElementById('cash-amount').value);
             if (!label || !amount) { alert('項目と金額を入力してください'); return; }
-            await fetch('/api/cash', {
+            await apiFetch('/api/cash', {
                 method: 'POST', headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({label, amount})
             });
@@ -771,7 +958,7 @@
             updateLastModified();
         }
         async function deleteCashItem(label) {
-            await fetch('/api/cash', {
+            await apiFetch('/api/cash', {
                 method: 'DELETE', headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({label})
             });
@@ -786,7 +973,7 @@
         async function updateGold() {
             const qty = parseFloat(document.getElementById('gold-qty').value);
             if (!qty || qty <= 0) { alert('正しい数量を入力してください'); return; }
-            await fetch('/api/gold', {
+            await apiFetch('/api/gold', {
                 method: 'POST', headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({qty})
             });
@@ -803,6 +990,7 @@
             updateGoldTable();
         }
         document.addEventListener('DOMContentLoaded', function() {
+            checkLogin();
             fetchAllData();
             showSection('dashboard');
             updateLastModified();
@@ -875,7 +1063,7 @@
             const samplePrice = Math.floor(Math.random() * 300) + 50;
             const companyName = `${symbol} Corp.`;
             
-            await fetch('/api/us_stocks', {
+            await apiFetch('/api/us_stocks', {
                 method: 'POST', headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({name: companyName, symbol, qty, price: samplePrice})
             });
@@ -898,7 +1086,7 @@
                 return;
             }
             
-            await fetch('/api/funds', {
+            await apiFetch('/api/funds', {
                 method: 'POST', headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({name, qty, price})
             });
@@ -921,7 +1109,7 @@
                 return;
             }
             
-            await fetch('/api/cash', {
+            await apiFetch('/api/cash', {
                 method: 'POST', headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({label, amount})
             });
@@ -941,7 +1129,7 @@
                 return;
             }
             
-            await fetch('/api/gold', {
+            await apiFetch('/api/gold', {
                 method: 'POST', headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({qty})
             });
