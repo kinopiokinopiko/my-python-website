@@ -6,7 +6,7 @@ import re
 from bs4 import BeautifulSoup
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # セッション用の秘密鍵
@@ -59,7 +59,9 @@ def load_data():
 
 def save_data(data):
     """ユーザーごとのデータファイルに保存"""
-    data['last_updated'] = datetime.now().isoformat()
+    # JSTで保存
+    jst = timezone(timedelta(hours=9))
+    data['last_updated'] = datetime.now(jst).strftime('%Y-%m-%d %H:%M:%S')
     data_file = get_data_file()
     with open(data_file, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
@@ -662,14 +664,14 @@ def update_gold():
 
 @app.route('/cash')
 def cash():
-    """現金管理ページ（項目ごと）"""
+    """現金管理ページ（投資信託風デザイン）"""
     data = load_data()
     total_cash = sum(item['amount'] for item in data.get('cash_items', []))
     template = """
     <!DOCTYPE html>
     <html lang=\"ja">
     <head>
-        <meta charset="UTF-8">
+        <meta charset=\"UTF-8">
         <title>現金管理</title>
         <style>
             body { font-family: Arial, sans-serif; margin: 20px; }
@@ -680,19 +682,21 @@ def cash():
             .back-link { margin: 20px 0; }
             .back-link a { color: #0066cc; text-decoration: none; }
             .current-amount { font-size: 24px; color: #0066cc; margin: 20px 0; }
+            table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+            th { background-color: #f2f2f2; }
+            .delete-btn { background: #dc3545; padding: 6px 16px; font-size: 16px; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+            .delete-btn:hover { background: #c82333; }
         </style>
     </head>
     <body>
-        <div class="back-link"><a href="{{ url_for('dashboard') }}">← ダッシュボードに戻る</a></div>
-        <h1>現金管理</h1>
-        <div class="current-amount">
-            合計現金: {{ "{:,}".format(total_cash|int) }} 円
-        </div>
-        <form method="POST" action="{{ url_for('add_cash_item') }}">
-            <div class="form-group">
-                <input type="text" name="label" placeholder="項目" required>
-                <input type="number" name="amount" step="1" placeholder="金額(円)" required>
-                <button type="submit">追加</button>
+        <div class=\"back-link\"><a href=\"{{ url_for('dashboard') }}\">← ダッシュボードに戻る</a></div>
+        <h1>現金管理ダッシュボード</h1>
+        <form method=\"POST\" action=\"{{ url_for('add_cash_item') }}\">
+            <div class=\"form-group\">
+                <input type=\"text\" name=\"label\" placeholder=\"項目\" required>
+                <input type=\"number\" name=\"amount\" step=\"1\" placeholder=\"金額\" required>
+                <button type=\"submit\">追加</button>
             </div>
         </form>
         <table>
@@ -702,4 +706,60 @@ def cash():
                 <td>{{ item.label }}</td>
                 <td>{{ "{:,}".format(item.amount|int) }} 円</td>
                 <td>
-                    <form method="POST" action="{{ url_for('delete_cash_item') }}
+                    <form method=\"POST\" action=\"{{ url_for('delete_cash_item') }}\" style=\"display:inline;\">
+                        <input type=\"hidden\" name=\"label\" value=\"{{ item.label }}\">
+                        <button type=\"submit\" class=\"delete-btn\">削除</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+        <div class=\"current-amount\">
+            合計現金: {{ "{:,}".format(total_cash|int) }} 円
+        </div>
+    </body>
+    </html>
+    """
+    return render_template_string(template, data=data, total_cash=total_cash)
+
+@app.route('/add_cash_item', methods=['POST'])
+def add_cash_item():
+    """現金項目を追加"""
+    data = load_data()
+    label = request.form['label']
+    amount = int(request.form['amount'])
+    
+    # 既存の現金項目を更新するか新規追加
+    for item in data.get('cash_items', []):
+        if item['label'] == label:
+            item['amount'] += amount
+            break
+    else:
+        data.setdefault('cash_items', []).append({
+            'label': label,
+            'amount': amount
+        })
+    
+    # 現金合計を再計算
+    total_cash = sum(item['amount'] for item in data.get('cash_items', []))
+    data['cash_jpy'] = total_cash
+    
+    save_data(data)
+    return redirect(url_for('cash'))
+
+@app.route('/delete_cash_item', methods=['POST'])
+def delete_cash_item():
+    """現金項目を削除"""
+    data = load_data()
+    label = request.form['label']
+    data['cash_items'] = [item for item in data.get('cash_items', []) if item['label'] != label]
+    
+    # 現金合計を再計算
+    total_cash = sum(item['amount'] for item in data.get('cash_items', []))
+    data['cash_jpy'] = total_cash
+    
+    save_data(data)
+    return redirect(url_for('cash'))
+
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0', port=5000)
