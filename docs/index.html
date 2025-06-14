@@ -5,538 +5,1173 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>資産情報ダッシュボード</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
         body { 
-            font-family: Arial, sans-serif; 
-            margin: 20px; 
-            background-color: #f5f5f5;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
         }
         
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            animation: slideIn 0.6s ease-out;
         }
         
-        h1 {
-            color: #333;
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
             text-align: center;
-            margin-bottom: 30px;
+            position: relative;
         }
         
         .user-info {
-            text-align: right;
-            margin-bottom: 20px;
+            position: absolute;
+            top: 20px;
+            right: 30px;
             font-size: 14px;
-            color: #666;
         }
         
-        .rate-info { 
-            margin: 10px 0; 
-            font-size: 14px; 
-            color: #666; 
-            text-align: center;
-            background-color: #e8f4fd;
-            padding: 10px;
-            border-radius: 5px;
+        .user-info a {
+            color: white;
+            text-decoration: none;
+            opacity: 0.8;
+            transition: opacity 0.3s;
         }
         
-        .nav-links { 
-            margin: 20px 0; 
-            text-align: center;
+        .user-info a:hover {
+            opacity: 1;
         }
         
-        .nav-links a { 
-            margin: 5px 10px; 
-            padding: 10px 20px; 
-            background: #0066cc; 
-            color: white; 
-            text-decoration: none; 
-            border-radius: 5px;
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .rate-info {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-size: 18px;
             display: inline-block;
+        }
+        
+        .nav-container {
+            padding: 30px;
+            background: rgba(247, 250, 252, 0.8);
+        }
+        
+        .nav-links {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .nav-links a {
+            padding: 15px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 12px;
+            text-align: center;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .nav-links a::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .nav-links a:hover::before {
+            left: 100%;
+        }
+        
+        .nav-links a:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        
+        .summary-table {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            margin-bottom: 30px;
+        }
+        
+        .summary-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .summary-table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .summary-table td {
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
             transition: background-color 0.3s;
         }
         
-        .nav-links a:hover { 
-            background: #0052a3; 
+        .summary-table tr:hover td {
+            background-color: #f8f9ff;
         }
         
-        table { 
-            border-collapse: collapse; 
-            width: 100%; 
-            margin: 20px 0; 
+        .asset-link {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s;
         }
         
-        th, td { 
-            border: 1px solid #ddd; 
-            padding: 12px 8px; 
-            text-align: center; 
+        .asset-link:hover {
+            color: #764ba2;
         }
         
-        th { 
-            background-color: #f2f2f2; 
+        .total-row {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
             font-weight: bold;
+            font-size: 20px;
         }
         
-        .asset-link { 
-            color: #0066cc; 
-            text-decoration: none; 
+        .total-row td {
+            border: none;
         }
         
-        .asset-link:hover { 
-            text-decoration: underline; 
+        .section {
+            background: white;
+            margin: 30px;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            display: none;
+            animation: fadeIn 0.5s ease-out;
         }
         
-        .total { 
-            font-weight: bold; 
-            background-color: #e8f4fd; 
-            font-size: 18px;
+        .section.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .section-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            font-size: 24px;
+            font-weight: 600;
         }
         
         .form-section {
-            margin: 30px 0;
-            padding: 20px;
-            background-color: #f9f9f9;
-            border-radius: 5px;
+            padding: 25px;
+            background: #f8f9ff;
+            border-bottom: 1px solid #eee;
         }
         
-        .form-group { 
-            margin: 10px 0; 
+        .form-group {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
         }
         
-        input[type="text"], input[type="number"] { 
-            padding: 8px; 
-            margin: 5px; 
-            border: 1px solid #ddd;
-            border-radius: 3px;
-            width: 150px;
+        .form-group input {
+            padding: 12px 16px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+            background: white;
         }
         
-        button { 
-            padding: 8px 15px; 
-            background: #0066cc; 
-            color: white; 
-            border: none; 
-            border-radius: 3px; 
-            cursor: pointer; 
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
         
-        button:hover { 
-            background: #0052a3; 
+        .btn {
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
         }
         
-        .delete-btn { 
-            background: #dc3545; 
-            padding: 4px 8px; 
-            font-size: 12px; 
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
         }
         
-        .delete-btn:hover { 
-            background: #c82333; 
-        }
-        
-        .last-updated {
-            text-align: center;
-            margin-top: 30px;
+        .btn-delete {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+            padding: 6px 12px;
             font-size: 12px;
-            color: #888;
         }
         
-        .section-title {
-            color: #333;
-            border-bottom: 2px solid #0066cc;
-            padding-bottom: 10px;
-            margin: 30px 0 20px 0;
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .data-table th {
+            background: #f8f9ff;
+            padding: 15px;
+            font-weight: 600;
+            color: #667eea;
+            border-bottom: 2px solid #e1e5e9;
+        }
+        
+        .data-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .data-table tr:hover {
+            background: #f8f9ff;
+        }
+        
+        .back-btn {
+            margin: 20px 30px;
+            display: inline-block;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-size: 14px;
+            background: rgba(247, 250, 252, 0.5);
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
         
         @media (max-width: 768px) {
-            .nav-links a {
-                display: block;
-                margin: 5px 0;
+            .nav-links {
+                grid-template-columns: 1fr;
             }
             
-            table {
-                font-size: 14px;
+            .form-group {
+                flex-direction: column;
+                align-items: stretch;
             }
             
-            input[type="text"], input[type="number"] {
-                width: 120px;
+            .form-group input {
+                width: 100%;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .container {
+                margin: 10px;
+                border-radius: 15px;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="user-info">
-            ログイン中: <strong>ユーザー名</strong> | <a href="#" onclick="logout()">ログアウト</a>
+        <div class="header">
+            <div class="user-info">
+                ログイン中: <strong>ユーザー名</strong> | <a href="#" onclick="logout()">ログアウト</a>
+            </div>
+            <h1>資産情報ダッシュボード</h1>
+            <div class="rate-info">
+                USD/JPY レート: <strong><span id="usd-rate">150.25</span> 円</strong>
+                <span id="rate-loading" class="loading" style="display: none;"></span>
+            </div>
         </div>
         
-        <h1>資産情報ダッシュボード</h1>
-        
-        <div class="rate-info">
-            USD/JPY レート: <strong>150.25 円</strong>
+        <div class="nav-container">
+            <div class="nav-links">
+                <a href="#" onclick="showSection('dashboard')">ダッシュボード</a>
+                <a href="#" onclick="showSection('jp-stocks')">日本株管理</a>
+                <a href="#" onclick="showSection('us-stocks')">米国株管理</a>
+                <a href="#" onclick="showSection('funds')">投資信託管理</a>
+                <a href="#" onclick="showSection('gold')">金管理</a>
+                <a href="#" onclick="showSection('cash')">現金管理</a>
+            </div>
+            
+            <div id="dashboard" class="summary-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>資産</th>
+                            <th>評価額</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><a href="#" onclick="showSection('jp-stocks')" class="asset-link">日本株</a></td>
+                            <td id="jp-total">1,250,000 円</td>
+                        </tr>
+                        <tr>
+                            <td><a href="#" onclick="showSection('us-stocks')" class="asset-link">米国株</a></td>
+                            <td id="us-total">2,100,000 円（$13,977.50）</td>
+                        </tr>
+                        <tr>
+                            <td><a href="#" onclick="showSection('funds')" class="asset-link">投資信託</a></td>
+                            <td id="fund-total">850,000 円</td>
+                        </tr>
+                        <tr>
+                            <td>仮想通貨</td>
+                            <td>0 円</td>
+                        </tr>
+                        <tr>
+                            <td><a href="#" onclick="showSection('gold')" class="asset-link">金 (Gold)</a></td>
+                            <td id="gold-total">125,000 円</td>
+                        </tr>
+                        <tr>
+                            <td><a href="#" onclick="showSection('cash')" class="asset-link">現金</a></td>
+                            <td id="cash-total">500,000 円</td>
+                        </tr>
+                        <tr class="total-row">
+                            <td>合計</td>
+                            <td id="grand-total">4,825,000 円</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
-        
-        <div class="nav-links">
-            <a href="#jp-stocks">日本株管理</a>
-            <a href="#us-stocks">米国株管理</a>
-            <a href="#funds">投資信託管理</a>
-            <a href="#gold">金管理</a>
-            <a href="#cash">現金管理</a>
-        </div>
-        
-        <!-- メイン資産サマリー -->
-        <table>
-            <tr>
-                <th>資産</th>
-                <th>評価額</th>
-            </tr>
-            <tr>
-                <td><a href="#jp-stocks" class="asset-link">日本株</a></td>
-                <td>1,250,000 円</td>
-            </tr>
-            <tr>
-                <td><a href="#us-stocks" class="asset-link">米国株</a></td>
-                <td>2,100,000 円（$13,977.50）</td>
-            </tr>
-            <tr>
-                <td><a href="#funds" class="asset-link">投資信託</a></td>
-                <td>850,000 円</td>
-            </tr>
-            <tr>
-                <td>仮想通貨</td>
-                <td>0 USD</td>
-            </tr>
-            <tr>
-                <td><a href="#gold" class="asset-link">金 (Gold)</a></td>
-                <td>125,000 円</td>
-            </tr>
-            <tr>
-                <td><a href="#cash" class="asset-link">現金</a></td>
-                <td>500,000 円</td>
-            </tr>
-            <tr class="total">
-                <td>合計</td>
-                <td>4,825,000 円</td>
-            </tr>
-        </table>
         
         <!-- 日本株セクション -->
-        <div id="jp-stocks">
-            <h2 class="section-title">日本株管理</h2>
+        <div id="jp-stocks" class="section">
+            <div class="section-header">日本株管理</div>
             <div class="form-section">
                 <div class="form-group">
                     <input type="text" id="jp-code" placeholder="証券コード" required>
                     <input type="number" id="jp-qty" placeholder="数量" required>
-                    <button onclick="addJpStock()">追加</button>
+                    <button class="btn" onclick="addJpStock()">追加</button>
                 </div>
             </div>
-            
-            <table id="jp-stocks-table">
-                <tr>
-                    <th>会社名</th>
-                    <th>証券コード</th>
-                    <th>数量</th>
-                    <th>株価</th>
-                    <th>評価額</th>
-                    <th>操作</th>
-                </tr>
-                <tr>
-                    <td>トヨタ自動車</td>
-                    <td>7203</td>
-                    <td>100</td>
-                    <td>2,500.00 円</td>
-                    <td>250,000 円</td>
-                    <td><button class="delete-btn" onclick="deleteStock(this)">削除</button></td>
-                </tr>
-                <tr>
-                    <td>ソニーグループ</td>
-                    <td>6758</td>
-                    <td>200</td>
-                    <td>5,000.00 円</td>
-                    <td>1,000,000 円</td>
-                    <td><button class="delete-btn" onclick="deleteStock(this)">削除</button></td>
-                </tr>
+            <table class="data-table" id="jp-stocks-table">
+                <thead>
+                    <tr>
+                        <th>会社名</th>
+                        <th>証券コード</th>
+                        <th>数量</th>
+                        <th>株価</th>
+                        <th>評価額</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>トヨタ自動車</td>
+                        <td>7203</td>
+                        <td>100</td>
+                        <td>2,500.00 円</td>
+                        <td>250,000 円</td>
+                        <td><button class="btn btn-delete" onclick="deleteRow(this)">削除</button></td>
+                    </tr>
+                    <tr>
+                        <td>ソニーグループ</td>
+                        <td>6758</td>
+                        <td>200</td>
+                        <td>5,000.00 円</td>
+                        <td>1,000,000 円</td>
+                        <td><button class="btn btn-delete" onclick="deleteRow(this)">削除</button></td>
+                    </tr>
+                </tbody>
             </table>
+            <button class="btn back-btn" onclick="showSection('dashboard')">← ダッシュボードに戻る</button>
         </div>
         
         <!-- 米国株セクション -->
-        <div id="us-stocks">
-            <h2 class="section-title">米国株管理</h2>
+        <div id="us-stocks" class="section">
+            <div class="section-header">米国株管理</div>
             <div class="form-section">
                 <div class="form-group">
                     <input type="text" id="us-symbol" placeholder="ティッカーシンボル" required>
                     <input type="number" id="us-qty" step="0.01" placeholder="数量" required>
-                    <button onclick="addUsStock()">追加</button>
+                    <button class="btn" onclick="addUsStock()">追加</button>
                 </div>
             </div>
-            
-            <table id="us-stocks-table">
-                <tr>
-                    <th>会社名</th>
-                    <th>シンボル</th>
-                    <th>数量</th>
-                    <th>株価(USD)</th>
-                    <th>株価(JPY)</th>
-                    <th>評価額(USD)</th>
-                    <th>評価額(JPY)</th>
-                    <th>操作</th>
-                </tr>
-                <tr>
-                    <td>Apple Inc.</td>
-                    <td>AAPL</td>
-                    <td>10</td>
-                    <td>$185.50</td>
-                    <td>27,871 円</td>
-                    <td>$1,855.00</td>
-                    <td>278,713 円</td>
-                    <td><button class="delete-btn" onclick="deleteStock(this)">削除</button></td>
-                </tr>
-                <tr>
-                    <td>Microsoft Corporation</td>
-                    <td>MSFT</td>
-                    <td>5</td>
-                    <td>$420.30</td>
-                    <td>63,150 円</td>
-                    <td>$2,101.50</td>
-                    <td>315,750 円</td>
-                    <td><button class="delete-btn" onclick="deleteStock(this)">削除</button></td>
-                </tr>
+            <table class="data-table" id="us-stocks-table">
+                <thead>
+                    <tr>
+                        <th>会社名</th>
+                        <th>シンボル</th>
+                        <th>数量</th>
+                        <th>株価(USD)</th>
+                        <th>株価(JPY)</th>
+                        <th>評価額(USD)</th>
+                        <th>評価額(JPY)</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Apple Inc.</td>
+                        <td>AAPL</td>
+                        <td>10</td>
+                        <td>$185.50</td>
+                        <td>27,871 円</td>
+                        <td>$1,855.00</td>
+                        <td>278,713 円</td>
+                        <td><button class="btn btn-delete" onclick="deleteRow(this)">削除</button></td>
+                    </tr>
+                    <tr>
+                        <td>Microsoft Corporation</td>
+                        <td>MSFT</td>
+                        <td>5</td>
+                        <td>$420.30</td>
+                        <td>63,150 円</td>
+                        <td>$2,101.50</td>
+                        <td>315,750 円</td>
+                        <td><button class="btn btn-delete" onclick="deleteRow(this)">削除</button></td>
+                    </tr>
+                </tbody>
             </table>
+            <button class="btn back-btn" onclick="showSection('dashboard')">← ダッシュボードに戻る</button>
         </div>
         
         <!-- 投資信託セクション -->
-        <div id="funds">
-            <h2 class="section-title">投資信託管理</h2>
+        <div id="funds" class="section">
+            <div class="section-header">投資信託管理</div>
             <div class="form-section">
                 <div class="form-group">
                     <input type="text" id="fund-name" placeholder="ファンド名" required>
                     <input type="number" id="fund-qty" step="0.01" placeholder="口数" required>
                     <input type="number" id="fund-price" step="0.01" placeholder="基準価額" required>
-                    <button onclick="addFund()">追加</button>
+                    <button class="btn" onclick="addFund()">追加</button>
                 </div>
             </div>
-            
-            <table id="funds-table">
-                <tr>
-                    <th>ファンド名</th>
-                    <th>口数</th>
-                    <th>基準価額</th>
-                    <th>評価額</th>
-                    <th>操作</th>
-                </tr>
-                <tr>
-                    <td>eMAXIS Slim 全世界株式</td>
-                    <td>5,000.00</td>
-                    <td>15,000.00 円</td>
-                    <td>75,000,000 円</td>
-                    <td><button class="delete-btn" onclick="deleteStock(this)">削除</button></td>
-                </tr>
+            <table class="data-table" id="funds-table">
+                <thead>
+                    <tr>
+                        <th>ファンド名</th>
+                        <th>口数</th>
+                        <th>基準価額</th>
+                        <th>評価額</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>eMAXIS Slim 全世界株式</td>
+                        <td>5,000.00</td>
+                        <td>170.00 円</td>
+                        <td>850,000 円</td>
+                        <td><button class="btn btn-delete" onclick="deleteRow(this)">削除</button></td>
+                    </tr>
+                </tbody>
             </table>
+            <button class="btn back-btn" onclick="showSection('dashboard')">← ダッシュボードに戻る</button>
         </div>
         
         <!-- 金管理セクション -->
-        <div id="gold">
-            <h2 class="section-title">金管理</h2>
+        <div id="gold" class="section">
+            <div class="section-header">金管理</div>
             <div class="form-section">
                 <div class="form-group">
                     <input type="number" id="gold-qty" step="0.1" placeholder="数量(g)" value="10.0" required>
-                    <button onclick="updateGold()">更新</button>
+                    <button class="btn" onclick="updateGold()">更新</button>
                 </div>
             </div>
-            
-            <table>
-                <tr>
-                    <th>資産</th>
-                    <th>数量</th>
-                    <th>価格</th>
-                    <th>評価額</th>
-                </tr>
-                <tr>
-                    <td>金 (Gold)</td>
-                    <td>10.0 g</td>
-                    <td>12,500 円/g</td>
-                    <td>125,000 円</td>
-                </tr>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>資産</th>
+                        <th>数量</th>
+                        <th>価格</th>
+                        <th>評価額</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>金 (Gold)</td>
+                        <td id="gold-quantity">10.0 g</td>
+                        <td>12,500 円/g</td>
+                        <td id="gold-value">125,000 円</td>
+                    </tr>
+                </tbody>
             </table>
+            <button class="btn back-btn" onclick="showSection('dashboard')">← ダッシュボードに戻る</button>
         </div>
         
         <!-- 現金管理セクション -->
-        <div id="cash">
-            <h2 class="section-title">現金管理</h2>
+        <div id="cash" class="section">
+            <div class="section-header">現金管理</div>
             <div class="form-section">
                 <div class="form-group">
                     <input type="text" id="cash-label" placeholder="項目" required>
                     <input type="number" id="cash-amount" placeholder="金額" required>
-                    <button onclick="addCashItem()">追加</button>
+                    <button class="btn" onclick="addCashItem()">追加</button>
                 </div>
             </div>
-            
-            <table id="cash-table">
-                <tr>
-                    <th>項目</th>
-                    <th>金額</th>
-                    <th>操作</th>
-                </tr>
-                <tr>
-                    <td>普通預金</td>
-                    <td>300,000 円</td>
-                    <td><button class="delete-btn" onclick="deleteStock(this)">削除</button></td>
-                </tr>
-                <tr>
-                    <td>定期預金</td>
-                    <td>200,000 円</td>
-                    <td><button class="delete-btn" onclick="deleteStock(this)">削除</button></td>
-                </tr>
+            <table class="data-table" id="cash-table">
+                <thead>
+                    <tr>
+                        <th>項目</th>
+                        <th>金額</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>普通預金</td>
+                        <td>300,000 円</td>
+                        <td><button class="btn btn-delete" onclick="deleteRow(this)">削除</button></td>
+                    </tr>
+                    <tr>
+                        <td>定期預金</td>
+                        <td>200,000 円</td>
+                        <td><button class="btn btn-delete" onclick="deleteRow(this)">削除</button></td>
+                    </tr>
+                </tbody>
             </table>
-            
-            <div style="text-align: center; font-size: 20px; color: #0066cc; margin: 20px 0;">
-                <strong>合計現金: 500,000 円</strong>
+            <div style="text-align: center; font-size: 24px; color: #667eea; margin: 30px 0; font-weight: bold;">
+                合計現金: <span id="cash-sum">500,000 円</span>
             </div>
+            <button class="btn back-btn" onclick="showSection('dashboard')">← ダッシュボードに戻る</button>
         </div>
         
-        <div class="last-updated">
-            最終更新: 2025-06-14 15:30:25
+        <div class="footer">
+            最終更新: <span id="last-updated">2025-06-15 15:30:25</span>
         </div>
     </div>
 
     <script>
-        // JavaScript functions for interactivity
-        
-        function logout() {
-            if (confirm('ログアウトしますか？')) {
-                alert('ログアウトしました');
-                // ここで実際のログアウト処理を行う
-            }
+        // データ管理
+        let assetData = {
+            jpStocks: [],
+            usStocks: [],
+            funds: [],
+            cash: [],
+            gold: {qty: 0, price: 0},
+            usdRate: 0
+        };
+
+        // API連携：全データ取得
+        async function fetchAllData() {
+            const dash = await fetch('/api/dashboard').then(r=>r.json());
+            assetData.usdRate = dash.usd_jpy;
+            assetData.jpStocks = await fetch('/api/jp_stocks').then(r=>r.json());
+            assetData.usStocks = await fetch('/api/us_stocks').then(r=>r.json());
+            assetData.funds = await fetch('/api/funds').then(r=>r.json());
+            assetData.cash = await fetch('/api/cash').then(r=>r.json());
+            const gold = await fetch('/api/gold').then(r=>r.json());
+            assetData.gold = gold;
+            updateDashboard();
+            updateAllTables();
         }
-        
-        function addJpStock() {
-            const code = document.getElementById('jp-code').value;
-            const qty = document.getElementById('jp-qty').value;
-            
-            if (!code || !qty) {
-                alert('証券コードと数量を入力してください');
-                return;
-            }
-            
-            // サンプルデータで新しい行を追加
-            const table = document.getElementById('jp-stocks-table');
-            const newRow = table.insertRow(-1);
-            newRow.innerHTML = `
-                <td>Sample Company</td>
-                <td>${code}</td>
-                <td>${qty}</td>
-                <td>1,000.00 円</td>
-                <td>${qty * 1000} 円</td>
-                <td><button class="delete-btn" onclick="deleteStock(this)">削除</button></td>
-            `;
-            
-            // フォームをクリア
+        // 日本株
+        function updateJpStocksTable() {
+            const table = document.getElementById('jp-stocks-table').getElementsByTagName('tbody')[0];
+            table.innerHTML = '';
+            assetData.jpStocks.forEach(stock => {
+                const row = table.insertRow();
+                row.innerHTML = `
+                    <td>${stock.name}</td>
+                    <td>${stock.code}</td>
+                    <td>${stock.qty}</td>
+                    <td>${Number(stock.price).toLocaleString()} 円</td>
+                    <td>${Number(stock.qty * stock.price).toLocaleString()} 円</td>
+                    <td><button class="btn btn-delete" onclick="deleteJpStock('${stock.code}')">削除</button></td>
+                `;
+            });
+        }
+        async function addJpStock() {
+            const code = document.getElementById('jp-code').value.trim();
+            const qty = parseInt(document.getElementById('jp-qty').value);
+            if (!code || !qty) { alert('証券コードと数量を入力してください'); return; }
+            const samplePrice = Math.floor(Math.random() * 5000) + 1000;
+            const companyName = `Company ${code}`;
+            await fetch('/api/jp_stocks', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({name: companyName, code, qty, price: samplePrice})
+            });
+            await fetchAllData();
             document.getElementById('jp-code').value = '';
             document.getElementById('jp-qty').value = '';
+            updateLastModified();
+        }
+        async function deleteJpStock(code) {
+            await fetch('/api/jp_stocks', {
+                method: 'DELETE', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({code})
+            });
+            await fetchAllData();
+            updateLastModified();
+        }
+        // 米国株
+        function updateUsStocksTable() {
+            const table = document.getElementById('us-stocks-table').getElementsByTagName('tbody')[0];
+            table.innerHTML = '';
+            assetData.usStocks.forEach(stock => {
+                const row = table.insertRow();
+                const priceJpy = stock.price * assetData.usdRate;
+                const totalUsd = stock.qty * stock.price;
+                const totalJpy = totalUsd * assetData.usdRate;
+                row.innerHTML = `
+                    <td>${stock.name}</td>
+                    <td>${stock.symbol}</td>
+                    <td>${stock.qty}</td>
+                    <td>$${Number(stock.price).toFixed(2)}</td>
+                    <td>${Math.round(priceJpy).toLocaleString()} 円</td>
+                    <td>$${totalUsd.toFixed(2)}</td>
+                    <td>${Math.round(totalJpy).toLocaleString()} 円</td>
+                    <td><button class="btn btn-delete" onclick="deleteUsStock('${stock.symbol}')">削除</button></td>
+                `;
+            });
+        }
+        async function addUsStock() {
+            const symbol = document.getElementById('us-symbol').value.trim().toUpperCase();
+            const qty = parseFloat(document.getElementById('us-qty').value);
+            if (!symbol || !qty) { alert('ティッカーシンボルと数量を入力してください'); return; }
+            const samplePrice = Math.floor(Math.random() * 300) + 50;
+            const companyName = `${symbol} Corp.`;
+            await fetch('/api/us_stocks', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({name: companyName, symbol, qty, price: samplePrice})
+            });
+            await fetchAllData();
+            document.getElementById('us-symbol').value = '';
+            document.getElementById('us-qty').value = '';
+            updateLastModified();
+        }
+        async function deleteUsStock(symbol) {
+            await fetch('/api/us_stocks', {
+                method: 'DELETE', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({symbol})
+            });
+            await fetchAllData();
+            updateLastModified();
+        }
+        // 投資信託
+        function updateFundsTable() {
+            const table = document.getElementById('funds-table').getElementsByTagName('tbody')[0];
+            table.innerHTML = '';
+            assetData.funds.forEach(fund => {
+                const row = table.insertRow();
+                const total = fund.qty * fund.price;
+                row.innerHTML = `
+                    <td>${fund.name}</td>
+                    <td>${Number(fund.qty).toFixed(2)}</td>
+                    <td>${Number(fund.price).toFixed(2)} 円</td>
+                    <td>${Math.round(total).toLocaleString()} 円</td>
+                    <td><button class="btn btn-delete" onclick="deleteFund('${fund.name}')">削除</button></td>
+                `;
+            });
+        }
+        async function addFund() {
+            const name = document.getElementById('fund-name').value.trim();
+            const qty = parseFloat(document.getElementById('fund-qty').value);
+            const price = parseFloat(document.getElementById('fund-price').value);
+            if (!name || !qty || !price) { alert('すべての項目を入力してください'); return; }
+            await fetch('/api/funds', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({name, qty, price})
+            });
+            await fetchAllData();
+            document.getElementById('fund-name').value = '';
+            document.getElementById('fund-qty').value = '';
+            document.getElementById('fund-price').value = '';
+            updateLastModified();
+        }
+        async function deleteFund(name) {
+            await fetch('/api/funds', {
+                method: 'DELETE', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({name})
+            });
+            await fetchAllData();
+            updateLastModified();
+        }
+        // 現金
+        function updateCashTable() {
+            const table = document.getElementById('cash-table').getElementsByTagName('tbody')[0];
+            table.innerHTML = '';
+            assetData.cash.forEach(item => {
+                const row = table.insertRow();
+                row.innerHTML = `
+                    <td>${item.label}</td>
+                    <td>${Number(item.amount).toLocaleString()} 円</td>
+                    <td><button class="btn btn-delete" onclick="deleteCashItem('${item.label}')">削除</button></td>
+                `;
+            });
+            updateCashTotal();
+        }
+        async function addCashItem() {
+            const label = document.getElementById('cash-label').value.trim();
+            const amount = parseInt(document.getElementById('cash-amount').value);
+            if (!label || !amount) { alert('項目と金額を入力してください'); return; }
+            await fetch('/api/cash', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({label, amount})
+            });
+            await fetchAllData();
+            document.getElementById('cash-label').value = '';
+            document.getElementById('cash-amount').value = '';
+            updateLastModified();
+        }
+        async function deleteCashItem(label) {
+            await fetch('/api/cash', {
+                method: 'DELETE', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({label})
+            });
+            await fetchAllData();
+            updateLastModified();
+        }
+        // 金
+        function updateGoldTable() {
+            document.getElementById('gold-quantity').textContent = assetData.gold.qty + ' g';
+            document.getElementById('gold-value').textContent = (assetData.gold.qty * assetData.gold.price).toLocaleString() + ' 円';
+        }
+        async function updateGold() {
+            const qty = parseFloat(document.getElementById('gold-qty').value);
+            if (!qty || qty <= 0) { alert('正しい数量を入力してください'); return; }
+            await fetch('/api/gold', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({qty})
+            });
+            await fetchAllData();
+            updateLastModified();
+            alert(`金の数量を ${qty}g に更新しました`);
+        }
+        // テーブル一括更新
+        function updateAllTables() {
+            updateJpStocksTable();
+            updateUsStocksTable();
+            updateFundsTable();
+            updateCashTable();
+            updateGoldTable();
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchAllData();
+            showSection('dashboard');
+            updateLastModified();
+        });
+        
+        // セクション表示切り替え
+        function showSection(sectionId) {
+            // 全てのセクションを非表示
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // ダッシュボード表示制御
+            const dashboard = document.getElementById('dashboard');
+            if (sectionId === 'dashboard') {
+                dashboard.style.display = 'block';
+                updateDashboard();
+            } else {
+                dashboard.style.display = 'none';
+                // 指定されたセクションを表示
+                const targetSection = document.getElementById(sectionId);
+                if (targetSection) {
+                    targetSection.classList.add('active');
+                }
+            }
+            
+            currentSection = sectionId;
         }
         
-        function addUsStock() {
-            const symbol = document.getElementById('us-symbol').value;
-            const qty = document.getElementById('us-qty').value;
+        // ダッシュボード更新
+        function updateDashboard() {
+            // 日本株合計
+            const jpTotal = assetData.jpStocks.reduce((sum, stock) => sum + (stock.qty * stock.price), 0);
+            document.getElementById('jp-total').textContent = jpTotal.toLocaleString() + ' 円';
+            
+            // 米国株合計
+            const usTotal = assetData.usStocks.reduce((sum, stock) => sum + (stock.qty * stock.price), 0);
+            const usTotalJpy = usTotal * assetData.usdRate;
+            document.getElementById('us-total').textContent = 
+                Math.round(usTotalJpy).toLocaleString() + ' 円（$' + usTotal.toFixed(2) + '）';
+            
+            // 投資信託合計
+            const fundTotal = assetData.funds.reduce((sum, fund) => sum + (fund.qty * fund.price), 0);
+            document.getElementById('fund-total').textContent = fundTotal.toLocaleString() + ' 円';
+            
+            // 金合計
+            const goldTotal = assetData.gold.qty * assetData.gold.price;
+            document.getElementById('gold-total').textContent = goldTotal.toLocaleString() + ' 円';
+            
+            // 現金合計
+            const cashTotal = assetData.cash.reduce((sum, item) => sum + item.amount, 0);
+            document.getElementById('cash-total').textContent = cashTotal.toLocaleString() + ' 円';
+            document.getElementById('cash-sum').textContent = cashTotal.toLocaleString() + ' 円';
+            
+            // 総合計
+            const grandTotal = jpTotal + usTotalJpy + fundTotal + goldTotal + cashTotal;
+            document.getElementById('grand-total').textContent = Math.round(grandTotal).toLocaleString() + ' 円';
+        }
+        
+        // 米国株追加
+        async function addUsStock() {
+            const symbol = document.getElementById('us-symbol').value.trim().toUpperCase();
+            const qty = parseFloat(document.getElementById('us-qty').value);
             
             if (!symbol || !qty) {
                 alert('ティッカーシンボルと数量を入力してください');
                 return;
             }
             
-            const table = document.getElementById('us-stocks-table');
-            const newRow = table.insertRow(-1);
-            newRow.innerHTML = `
-                <td>Sample US Company</td>
-                <td>${symbol.toUpperCase()}</td>
-                <td>${qty}</td>
-                <td>$100.00</td>
-                <td>15,025 円</td>
-                <td>$${qty * 100}</td>
-                <td>${qty * 100 * 150.25} 円</td>
-                <td><button class="delete-btn" onclick="deleteStock(this)">削除</button></td>
-            `;
+            const samplePrice = Math.floor(Math.random() * 300) + 50;
+            const companyName = `${symbol} Corp.`;
+            
+            await fetch('/api/us_stocks', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({name: companyName, symbol, qty, price: samplePrice})
+            });
+            await fetchAllData();
             
             document.getElementById('us-symbol').value = '';
             document.getElementById('us-qty').value = '';
+            
+            updateLastModified();
         }
         
-        function addFund() {
-            const name = document.getElementById('fund-name').value;
-            const qty = document.getElementById('fund-qty').value;
-            const price = document.getElementById('fund-price').value;
+        // 投資信託追加
+        async function addFund() {
+            const name = document.getElementById('fund-name').value.trim();
+            const qty = parseFloat(document.getElementById('fund-qty').value);
+            const price = parseFloat(document.getElementById('fund-price').value);
             
             if (!name || !qty || !price) {
                 alert('すべての項目を入力してください');
                 return;
             }
             
-            const table = document.getElementById('funds-table');
-            const newRow = table.insertRow(-1);
-            newRow.innerHTML = `
-                <td>${name}</td>
-                <td>${parseFloat(qty).toFixed(2)}</td>
-                <td>${parseFloat(price).toFixed(2)} 円</td>
-                <td>${Math.round(qty * price).toLocaleString()} 円</td>
-                <td><button class="delete-btn" onclick="deleteStock(this)">削除</button></td>
-            `;
+            await fetch('/api/funds', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({name, qty, price})
+            });
+            await fetchAllData();
             
             document.getElementById('fund-name').value = '';
             document.getElementById('fund-qty').value = '';
             document.getElementById('fund-price').value = '';
+            
+            updateLastModified();
         }
         
-        function addCashItem() {
-            const label = document.getElementById('cash-label').value;
-            const amount = document.getElementById('cash-amount').value;
+        // 現金項目追加
+        async function addCashItem() {
+            const label = document.getElementById('cash-label').value.trim();
+            const amount = parseInt(document.getElementById('cash-amount').value);
             
             if (!label || !amount) {
                 alert('項目と金額を入力してください');
                 return;
             }
             
-            const table = document.getElementById('cash-table');
-            const newRow = table.insertRow(-1);
-            newRow.innerHTML = `
-                <td>${label}</td>
-                <td>${parseInt(amount).toLocaleString()} 円</td>
-                <td><button class="delete-btn" onclick="deleteStock(this)">削除</button></td>
-            `;
+            await fetch('/api/cash', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({label, amount})
+            });
+            await fetchAllData();
             
             document.getElementById('cash-label').value = '';
             document.getElementById('cash-amount').value = '';
+            
+            updateLastModified();
         }
         
-        function updateGold() {
-            const qty = document.getElementById('gold-qty').value;
-            if (!qty) {
-                alert('数量を入力してください');
+        // 金の数量更新
+        async function updateGold() {
+            const qty = parseFloat(document.getElementById('gold-qty').value);
+            if (!qty || qty <= 0) {
+                alert('正しい数量を入力してください');
                 return;
             }
+            
+            await fetch('/api/gold', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({qty})
+            });
+            await fetchAllData();
+            
+            updateLastModified();
             alert(`金の数量を ${qty}g に更新しました`);
         }
         
-        function deleteStock(button) {
-            if (confirm('この項目を削除しますか？')) {
-                button.closest('tr').remove();
+        // 現金合計更新
+        function updateCashTotal() {
+            const total = assetData.cash.reduce((sum, item) => sum + item.amount, 0);
+            document.getElementById('cash-sum').textContent = total.toLocaleString() + ' 円';
+        }
+        
+        // 行削除
+        function deleteRow(button) {
+            if (!confirm('この項目を削除しますか？')) {
+                return;
+            }
+            
+            const row = button.closest('tr');
+            const table = button.closest('table');
+            const rowIndex = Array.from(table.getElementsByTagName('tbody')[0].rows).indexOf(row);
+            
+            // データからも削除
+            if (table.id === 'jp-stocks-table') {
+                assetData.jpStocks.splice(rowIndex, 1);
+            } else if (table.id === 'us-stocks-table') {
+                assetData.usStocks.splice(rowIndex, 1);
+            } else if (table.id === 'funds-table') {
+                assetData.funds.splice(rowIndex, 1);
+            } else if (table.id === 'cash-table') {
+                assetData.cash.splice(rowIndex, 1);
+                updateCashTotal();
+            }
+            
+            row.remove();
+            updateLastModified();
+        }
+        
+        // ログアウト
+        function logout() {
+            if (confirm('ログアウトしますか？')) {
+                // アニメーション効果
+                document.querySelector('.container').style.animation = 'slideOut 0.5s ease-in forwards';
+                
+                setTimeout(() => {
+                    alert('ログアウトしました');
+                    // 実際のログアウト処理をここに実装
+                    location.reload();
+                }, 500);
             }
         }
         
-        // スムーズスクロール
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth'
-                    });
+        // 最終更新時刻の更新
+        function updateLastModified() {
+            const now = new Date();
+            const formatted = now.getFullYear() + '-' + 
+                String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+                String(now.getDate()).padStart(2, '0') + ' ' + 
+                String(now.getHours()).padStart(2, '0') + ':' + 
+                String(now.getMinutes()).padStart(2, '0') + ':' + 
+                String(now.getSeconds()).padStart(2, '0');
+            
+            document.getElementById('last-updated').textContent = formatted;
+        }
+        
+        // USD/JPYレート更新シミュレーション
+        function updateUsdRate() {
+            const loading = document.getElementById('rate-loading');
+            loading.style.display = 'inline-block';
+            
+            setTimeout(() => {
+                // ランダムな変動をシミュレート
+                const variation = (Math.random() - 0.5) * 2; // -1 to 1
+                assetData.usdRate += variation;
+                assetData.usdRate = Math.max(140, Math.min(160, assetData.usdRate)); // 140-160の範囲に制限
+                
+                document.getElementById('usd-rate').textContent = assetData.usdRate.toFixed(2);
+                loading.style.display = 'none';
+                
+                // 米国株の円建て価格を更新
+                updateUsStockPrices();
+                
+                if (currentSection === 'dashboard') {
+                    updateDashboard();
                 }
-            });
+            }, 1000);
+        }
+        
+        // 米国株の円建て価格更新
+        function updateUsStockPrices() {
+            const table = document.getElementById('us-stocks-table').getElementsByTagName('tbody')[0];
+            const rows = table.rows;
+            
+            for (let i = 0; i < rows.length && i < assetData.usStocks.length; i++) {
+                const stock = assetData.usStocks[i];
+                const priceJpy = stock.price * assetData.usdRate;
+                const totalUsd = stock.qty * stock.price;
+                const totalJpy = totalUsd * assetData.usdRate;
+                
+                rows[i].cells[4].textContent = Math.round(priceJpy).toLocaleString() + ' 円';
+                rows[i].cells[6].textContent = Math.round(totalJpy).toLocaleString() + ' 円';
+            }
+        }
+        
+        // 定期的なレート更新（デモ用）
+        setInterval(updateUsdRate, 30000); // 30秒ごと
+        
+        // キーボードショートカット
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case '1':
+                        e.preventDefault();
+                        showSection('dashboard');
+                        break;
+                    case '2':
+                        e.preventDefault();
+                        showSection('jp-stocks');
+                        break;
+                    case '3':
+                        e.preventDefault();
+                        showSection('us-stocks');
+                        break;
+                    case '4':
+                        e.preventDefault();
+                        showSection('funds');
+                        break;
+                    case '5':
+                        e.preventDefault();
+                        showSection('gold');
+                        break;
+                    case '6':
+                        e.preventDefault();
+                        showSection('cash');
+                        break;
+                }
+            }
         });
+        
+        // スムーズスクロール（モバイル対応）
+        function smoothScrollTo(element) {
+            element.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }
+        
+        // タッチデバイス対応
+        let touchStartY = 0;
+        let touchEndY = 0;
+        
+        document.addEventListener('touchstart', function(e) {
+            touchStartY = e.changedTouches[0].screenY;
+        });
+        
+        document.addEventListener('touchend', function(e) {
+            touchEndY = e.changedTouches[0].screenY;
+            handleSwipe();
+        });
+        
+        function handleSwipe() {
+            const swipeThreshold = 50;
+            const diff = touchStartY - touchEndY;
+            
+            if (Math.abs(diff) > swipeThreshold) {
+                // スワイプによるセクション切り替えは無効化（誤操作防止）
+                // 必要に応じて実装可能
+            }
+        }
+        
+        // パフォーマンス最適化：デバウンス関数
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+        
+        // リサイズイベントの最適化
+        const optimizedResize = debounce(function() {
+            // リサイズ時の処理があれば実装
+            console.log('Window resized');
+        }, 250);
+        
+        window.addEventListener('resize', optimizedResize);
+        
+        // エラーハンドリング
+        window.addEventListener('error', function(e) {
+            console.error('JavaScript Error:', e.error);
+            // プロダクション環境では適切なエラー報告システムに送信
+        });
+        
+        // 追加のCSSアニメーション
+        const additionalStyles = `
+            @keyframes slideOut {
+                from {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+                to {
+                    opacity: 0;
+                    transform: translateY(-30px);
+                }
+            }
+            
+            .container:hover {
+                box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+            }
+            
+            .nav-links a:active {
+                transform: scale(0.98);
+            }
+            
+            .btn:active {
+                transform: scale(0.98) translateY(-1px);
+            }
+        `;
+        
+        // 動的スタイル追加
+        const styleSheet = document.createElement('style');
+        styleSheet.textContent = additionalStyles;
+        document.head.appendChild(styleSheet);
     </script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-from flask import Flask, render_template_string, request, redirect, url_for, session, jsonify
+from flask import Flask, render_template_string, request, redirect, url_for, session
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 import yfinance as yf
 import requests
@@ -7,7 +7,6 @@ from bs4 import BeautifulSoup
 import json
 import os
 from datetime import datetime, timedelta, timezone
-from flask import abort
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # セッション用の秘密鍵
@@ -752,155 +751,6 @@ def delete_cash_item():
     
     save_data(data)
     return redirect(url_for('cash'))
-
-# --- APIエンドポイント ---
-
-@app.route('/api/dashboard', methods=['GET'])
-@login_required
-def api_dashboard():
-    try:
-        data = load_data()
-        usd_jpy = get_usd_jpy_rate()
-        jp_total = sum(stock['qty'] * stock['price'] for stock in data.get('jp_stocks', []))
-        us_total_usd = sum(stock['qty'] * stock['price'] for stock in data.get('us_stocks', []))
-        us_total_jpy = int(us_total_usd * usd_jpy) if usd_jpy else 0
-        fund_total = sum(fund['qty'] * fund['price'] for fund in data.get('funds', []))
-        gold_price = get_gold_price()
-        gold_total = (data.get('gold_qty') or 0) * gold_price
-        cash_total = sum(item['amount'] for item in data.get('cash_items', []))
-        return jsonify({
-            'jp_total': jp_total,
-            'us_total_usd': us_total_usd,
-            'us_total_jpy': us_total_jpy,
-            'fund_total': fund_total,
-            'gold_total': gold_total,
-            'cash_total': cash_total,
-            'grand_total': jp_total + us_total_jpy + fund_total + gold_total + cash_total,
-            'usd_jpy': usd_jpy,
-            'last_updated': data.get('last_updated')
-        })
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/jp_stocks', methods=['GET', 'POST', 'DELETE'])
-@login_required
-def api_jp_stocks():
-    data = load_data()
-    if request.method == 'GET':
-        return jsonify(data.get('jp_stocks', []))
-    elif request.method == 'POST':
-        item = request.json
-        if not item or 'code' not in item or 'qty' not in item or 'price' not in item:
-            return jsonify({'error': 'Invalid input'}), 400
-        try:
-            item['qty'] = int(item['qty'])
-            item['price'] = float(item['price'])
-        except Exception:
-            return jsonify({'error': 'Invalid qty or price'}), 400
-        data.setdefault('jp_stocks', []).append(item)
-        save_data(data)
-        return jsonify({'result': 'ok'})
-    elif request.method == 'DELETE':
-        code = request.json.get('code')
-        if not code:
-            return jsonify({'error': 'Code required'}), 400
-        data['jp_stocks'] = [s for s in data.get('jp_stocks', []) if s['code'] != code]
-        save_data(data)
-        return jsonify({'result': 'ok'})
-
-@app.route('/api/us_stocks', methods=['GET', 'POST', 'DELETE'])
-@login_required
-def api_us_stocks():
-    data = load_data()
-    if request.method == 'GET':
-        return jsonify(data.get('us_stocks', []))
-    elif request.method == 'POST':
-        item = request.json
-        if not item or 'symbol' not in item or 'qty' not in item or 'price' not in item:
-            return jsonify({'error': 'Invalid input'}), 400
-        try:
-            item['qty'] = float(item['qty'])
-            item['price'] = float(item['price'])
-        except Exception:
-            return jsonify({'error': 'Invalid qty or price'}), 400
-        data.setdefault('us_stocks', []).append(item)
-        save_data(data)
-        return jsonify({'result': 'ok'})
-    elif request.method == 'DELETE':
-        symbol = request.json.get('symbol')
-        if not symbol:
-            return jsonify({'error': 'Symbol required'}), 400
-        data['us_stocks'] = [s for s in data.get('us_stocks', []) if s['symbol'] != symbol]
-        save_data(data)
-        return jsonify({'result': 'ok'})
-
-@app.route('/api/funds', methods=['GET', 'POST', 'DELETE'])
-@login_required
-def api_funds():
-    data = load_data()
-    if request.method == 'GET':
-        return jsonify(data.get('funds', []))
-    elif request.method == 'POST':
-        item = request.json
-        if not item or 'name' not in item or 'qty' not in item or 'price' not in item:
-            return jsonify({'error': 'Invalid input'}), 400
-        try:
-            item['qty'] = float(item['qty'])
-            item['price'] = float(item['price'])
-        except Exception:
-            return jsonify({'error': 'Invalid qty or price'}), 400
-        data.setdefault('funds', []).append(item)
-        save_data(data)
-        return jsonify({'result': 'ok'})
-    elif request.method == 'DELETE':
-        name = request.json.get('name')
-        if not name:
-            return jsonify({'error': 'Name required'}), 400
-        data['funds'] = [f for f in data.get('funds', []) if f['name'] != name]
-        save_data(data)
-        return jsonify({'result': 'ok'})
-
-@app.route('/api/gold', methods=['GET', 'POST'])
-@login_required
-def api_gold():
-    data = load_data()
-    if request.method == 'GET':
-        gold_price = get_gold_price()
-        return jsonify({'qty': data.get('gold_qty', 0), 'price': gold_price})
-    elif request.method == 'POST':
-        qty = request.json.get('qty')
-        try:
-            qty = float(qty)
-        except Exception:
-            return jsonify({'error': 'Invalid qty'}), 400
-        data['gold_qty'] = qty
-        save_data(data)
-        return jsonify({'result': 'ok'})
-
-@app.route('/api/cash', methods=['GET', 'POST', 'DELETE'])
-@login_required
-def api_cash():
-    data = load_data()
-    if request.method == 'GET':
-        return jsonify(data.get('cash_items', []))
-    elif request.method == 'POST':
-        item = request.json
-        if not item or 'label' not in item or 'amount' not in item:
-            return jsonify({'error': 'Invalid input'}), 400
-        try:
-            item['amount'] = int(item['amount'])
-        except Exception:
-            return jsonify({'error': 'Invalid amount'}), 400
-        data.setdefault('cash_items', []).append(item)
-        save_data(data)
-        return jsonify({'result': 'ok'})
-    elif request.method == 'DELETE':
-        label = request.json.get('label')
-        if not label:
-            return jsonify({'error': 'Label required'}), 400
-        data['cash_items'] = [c for c in data.get('cash_items', []) if c['label'] != label]
-        save_data(data)
-        return jsonify({'result': 'ok'})
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
