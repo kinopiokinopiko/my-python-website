@@ -178,26 +178,22 @@ def logout():
 def dashboard():
     """メインダッシュボード"""
     data = load_data()
-    
     # 各資産の評価額を計算
     jp_total = sum(stock['qty'] * stock['price'] for stock in data['jp_stocks'])
-    
-    # USD→円レート取得
     usd_jpy = get_usd_jpy_rate()
     us_total_usd = sum(stock['qty'] * stock['price'] for stock in data['us_stocks'])
     us_total_jpy = int(us_total_usd * usd_jpy) if usd_jpy else 0
-    
     fund_total = sum(fund['qty'] * fund['price'] for fund in data['funds'])
     crypto_total = 0  # 仮想通貨は後で実装
     gold_price = get_gold_price()
     gold_total = (data.get('gold_qty') or 0) * gold_price
-    
+    cash_total = sum(item['amount'] for item in data.get('cash_items', []))
     template = """
     <!DOCTYPE html>
-    <html lang="ja">
+    <html lang=\"ja">
     <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta charset=\"UTF-8">
+        <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0">
         <title>資産情報ダッシュボード</title>
         <style>
             body { font-family: Arial, sans-serif; margin: 20px; }
@@ -215,34 +211,31 @@ def dashboard():
     </head>
     <body>
         <h1>資産情報ダッシュボード</h1>
-        
-        <div class="rate-info">
-            USD/JPY レート: {{ "{:,.2f}".format(usd_jpy) }} 円
+        <div class=\"rate-info\">
+            USD/JPY レート: {{ "{:.2f}".format(usd_jpy) }} 円
         </div>
-        
-        <div class="nav-links">
-            <a href="{{ url_for('jp_stocks') }}">日本株管理</a>
-            <a href="{{ url_for('us_stocks') }}">米国株管理</a>
-            <a href="{{ url_for('funds') }}">投資信託管理</a>
-            <a href="{{ url_for('gold') }}">金管理</a>
-            <a href="{{ url_for('cash') }}">現金管理</a>
+        <div class=\"nav-links\">
+            <a href=\"{{ url_for('jp_stocks') }}\">日本株管理</a>
+            <a href=\"{{ url_for('us_stocks') }}\">米国株管理</a>
+            <a href=\"{{ url_for('funds') }}\">投資信託管理</a>
+            <a href=\"{{ url_for('gold') }}\">金管理</a>
+            <a href=\"{{ url_for('cash') }}\">現金管理</a>
         </div>
-        
         <table>
             <tr>
                 <th>資産</th>
                 <th>評価額</th>
             </tr>
             <tr>
-                <td><a href="{{ url_for('jp_stocks') }}" class="asset-link">日本株</a></td>
+                <td><a href=\"{{ url_for('jp_stocks') }}\" class=\"asset-link\">日本株</a></td>
                 <td>{{ "{:,}".format(jp_total|int) }} 円</td>
             </tr>
             <tr>
-                <td><a href="{{ url_for('us_stocks') }}" class="asset-link">米国株</a></td>
-                <td>{{ "{:,}".format(us_total_jpy|int) }} 円（${{ "{:,.2f}".format(us_total_usd) }}）</td>
+                <td><a href=\"{{ url_for('us_stocks') }}\" class=\"asset-link\">米国株</a></td>
+                <td>{{ "{:,}".format(us_total_jpy|int) }} 円（${{ "{:.2f}".format(us_total_usd) }}）</td>
             </tr>
             <tr>
-                <td><a href="{{ url_for('funds') }}" class="asset-link">投資信託</a></td>
+                <td><a href=\"{{ url_for('funds') }}\" class=\"asset-link\">投資信託</a></td>
                 <td>{{ "{:,}".format(fund_total|int) }} 円</td>
             </tr>
             <tr>
@@ -250,27 +243,25 @@ def dashboard():
                 <td>0 USD</td>
             </tr>
             <tr>
-                <td><a href="{{ url_for('gold') }}" class="asset-link">金 (Gold)</a></td>
+                <td><a href=\"{{ url_for('gold') }}\" class=\"asset-link\">金 (Gold)</a></td>
                 <td>{{ "{:,}".format(gold_total|int) }} 円</td>
             </tr>
             <tr>
-                <td><a href="{{ url_for('cash') }}" class="asset-link">現金</a></td>
-                <td>{{ "{:,}".format((sum(item['amount'] for item in data.get('cash_items', [])))|int) }} 円</td>
+                <td><a href=\"{{ url_for('cash') }}\" class=\"asset-link\">現金</a></td>
+                <td>{{ "{:,}".format(cash_total|int) }} 円</td>
             </tr>
-            <tr class="total">
+            <tr class=\"total\">
                 <td>合計</td>
-                <td>{{ "{:,}".format((jp_total + fund_total + gold_total + us_total_jpy + sum(item['amount'] for item in data.get('cash_items', [])))|int) }} 円</td>
+                <td>{{ "{:,}".format((jp_total + fund_total + gold_total + us_total_jpy + cash_total)|int) }} 円</td>
             </tr>
         </table>
-        
         {% if data.last_updated %}
-        <p><small>最終更新: {{ data.last_updated[:19] }}</small></p>
+        <p><small>最終更新: {{ data.last_updated }}</small></p>
         {% endif %}
     </body>
     </html>
     """
-    
-    return render_template_string(template, jp_total=jp_total, us_total_usd=us_total_usd, us_total_jpy=us_total_jpy, fund_total=fund_total, gold_total=gold_total, data=data, usd_jpy=usd_jpy)
+    return render_template_string(template, jp_total=jp_total, us_total_usd=us_total_usd, us_total_jpy=us_total_jpy, fund_total=fund_total, gold_total=gold_total, data=data, usd_jpy=usd_jpy, cash_total=cash_total)
 
 @app.route('/jp_stocks')
 def jp_stocks():
