@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "manifest-sum-463007-p7",
+  "private_key_id": "9d0100fe9d3f1386fd057e227f10fceed1648207",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCxDxVwCxpM4XOC\nD157rUh4Qv6/CsGN6Whsnbfe/NiUj7BzJsbQ7VYPd4ZecK88d1pngb5BBmi7Tn2Z\nGJT5Mxh8WAodYOrweqcQEc1EjDe3InpaeoO/sYfr5MFDwFW5GNBZA4sZ8v2YiL4C\nseHPAWzIw0c6iN8le7yIDM0DSXLB7fAK4ElwEu3qad+B/CigKKdZw7PhN/VUaT8W\nwqo3n8itAcm6oq1FGqvWyTfb5WpxM0ZLHiCd5sTx3nQD5UY2d+5v4SLVmSoaaHsu\nd4acTQ3i0jaZcei/pl3kesxoNq7yurXvbmtQjq4F+OhD5PwSqKVGu1tt0WvQvQVu\nkhVjdwfTAgMBAAECgf8u+y0Qe5iRO4p9Cpb1OjyAiCHHRko6JsczL4HRco8qAPaa\nKcIp0obxJfzc7cBtOKv7OM15vLmf1UY1RxmuKqnUndDssZPuqS89b8T1fa0B2MjD\nFL8p53GE74l9Oec7/0dJe94RqTF8o15aD5ASJqoSUlDvkqsREEQtQzhHlLWnv0Bq\n0UYsQTTJ/DLCeuHJs+j5Wv8ucHkTUBdNrr6akSXZpVRksiknUbUjz5jM6xtqMZ6y\n3//VIYk5/K8LAc5cd/sAgctVarl9H+Mx90LoM3QPpuBRagfjNod9TVi3LYpQkQWi\n1IlyapqlYChJR2X82gA3NX3flwBXfjgCkwo8KP0CgYEA6U2Z22iD/FuzY6Ewdb7z\nQSo+dMRrkr6dwY9EWAyUmtQ2Z+OPBu6T3nWGMIydCaepsGrPpllFhFlTa7UBRRlB\nexoZ6Lojp8jH16gqaKWKo8TKzjeSuJ94WU/aXP821Ltcz40eXmhIZWeCkJj9lFrT\nJohdGc3o2KoeqOK+bn+9A5UCgYEAwki5dd9XI3ZNjC7/HlqQLYcVX4utHZ3eyHbZ\nZUc2G9qmGDQewHpnj57WMOIz/7MjKYc5Rc0oEtUGHxN8704/H3VSFufJRuoE+YmL\nu6Zp1rCcPJ4nF9aUWsQZ63C2vslnZgZEoYhZeRtxbjU9HpIDTPWRsqS3PybosvHS\nYvbkg8cCgYEA1T1dfGJ6CKXUQCLrRSPj+NLgxR9m53icfncxU30kMqP2mlwutXpI\n41Lt9OABBPsfKSVnaDc+R+rRSafmYj7kT90ag1HnFwt4RU/qez2bi3Zqm7PFwkPX\n32ISR1/pwOUDvpzQfh+41B6ZAwsi839UcWrAFb7TrX1Iirq8rgjJPUUCgYEAhC2M\nF7iCBTtYWPYkVVdR3deYX++cMJkWV5YcIz5Gfr7L342eGl9sk5aBrLJIpD8QvhEk\nkuuXxvAtAPl2Ny0p3tInrjO1iUxvZAIDEgCO4yQ2tzr1587yEap24+pEOhq2AQBk\nsu0byjw0eME5utGl8zbjEAHmNc3X5N6GvxOvtkMCgYAsE3w+dRBj7+s7L3rzrMF4\nNsZrxhW+bMNAYNU2k71O0pAQtu34t8KsuQr2MvqM4gLU9FiGN4d+9/FEn8S+K/W1\nL1QHZ6M/Al8YllEMiKSXZZV8xkUG6Nkya97IktyV2ohIoU2bl3ja7Iq0ROmwj2yh\ngfhl0YNO5LbX8F/je9qN3w==\n-----END PRIVATE KEY-----\n",
+  "client_email": "stock-holder@manifest-sum-463007-p7.iam.gserviceaccount.com",
+  "client_id": "106360577932088358740",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/stock-holder%40manifest-sum-463007-p7.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

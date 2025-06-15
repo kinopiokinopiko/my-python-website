@@ -8,6 +8,8 @@ import json
 import os
 from datetime import datetime, timedelta, timezone
 from flask import abort
+import gspread
+from google.oauth2.service_account import Credentials
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # セッション用の秘密鍵
@@ -34,38 +36,59 @@ def load_user(user_id):
         return User(user_id)
     return None
 
+# Google Sheets設定
+GSHEET_SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
+GSHEET_CRED_FILE = 'credentials.json'  # サービスアカウント認証ファイル
+GSHEET_SPREADSHEET_ID = '1CRA4YrK6lJjKm_L1h7xR_u8Q9thwURu62-6VUTnW6Qg'  # 手順案内で取得
+
+# ユーザーごとにシート名を分ける
+def get_gsheet_client():
+    creds = Credentials.from_service_account_file(GSHEET_CRED_FILE, scopes=GSHEET_SCOPES)
+    return gspread.authorize(creds)
+
 def get_data_file():
     if current_user.is_authenticated:
         return f'asset_data_{current_user.id}.json'
     return 'asset_data_guest.json'
 
 def load_data():
-    """ユーザーごとのデータファイルから資産情報を読み込み"""
-    data_file = get_data_file()
-    if os.path.exists(data_file):
-        try:
-            with open(data_file, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        except:
-            pass
+    """Google Sheetsからユーザーごとの資産情報を読み込み"""
+    if not current_user.is_authenticated:
+        return {
+            'jp_stocks': [], 'us_stocks': [], 'funds': [], 'crypto': [], 'gold_qty': 0, 'cash_items': [], 'last_updated': None
+        }
+    gc = get_gsheet_client()
+    sh = gc.open_by_key(GSHEET_SPREADSHEET_ID)
+    sheet_name = f"{current_user.id}_data"
+    try:
+        ws = sh.worksheet(sheet_name)
+        val = ws.acell('A1').value
+        if val:
+            return json.loads(val)
+    except Exception:
+        pass
     return {
-        'jp_stocks': [],
-        'us_stocks': [],
-        'funds': [],
-        'crypto': [],
-        'gold_qty': 0,
-        'cash_items': [],  # 項目ごとの現金リスト
-        'last_updated': None
+        'jp_stocks': [], 'us_stocks': [], 'funds': [], 'crypto': [], 'gold_qty': 0, 'cash_items': [], 'last_updated': None
     }
 
 def save_data(data):
-    """ユーザーごとのデータファイルに保存"""
-    # JSTで保存
+    """Google Sheetsにユーザーごとの資産情報を保存"""
+    from datetime import datetime, timezone, timedelta
     jst = timezone(timedelta(hours=9))
     data['last_updated'] = datetime.now(jst).strftime('%Y-%m-%d %H:%M:%S')
-    data_file = get_data_file()
-    with open(data_file, 'w', encoding='utf-8') as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
+    if not current_user.is_authenticated:
+        return
+    gc = get_gsheet_client()
+    sh = gc.open_by_key(GSHEET_SPREADSHEET_ID)
+    sheet_name = f"{current_user.id}_data"
+    try:
+        try:
+            ws = sh.worksheet(sheet_name)
+        except gspread.exceptions.WorksheetNotFound:
+            ws = sh.add_worksheet(title=sheet_name, rows=1, cols=1)
+        ws.update('A1', json.dumps(data, ensure_ascii=False))
+    except Exception as e:
+        print('Google Sheets保存エラー:', e)
 
 def get_jp_stock_info(code):
     """日本株の情報を取得"""
